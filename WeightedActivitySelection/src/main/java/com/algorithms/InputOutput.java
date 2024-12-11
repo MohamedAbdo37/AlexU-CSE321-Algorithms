@@ -26,6 +26,13 @@ public class InputOutput {
     }
 
 
+    /**
+     * Code Source: W3schools.
+     * URL: https://www.w3schools.com/java/java_files_read.asp
+     * Description: This code was using the Scanner class to read the contents of the text file and display it on the screen.
+     * Changes Made:
+     *  - Adapted the method to read an array of activities.
+     */
     public Activity[] getActivities() {
         Activity[] activities = null;
         try {
@@ -47,6 +54,13 @@ public class InputOutput {
         return activities;
     }
 
+    /*
+     * Code Source: W3schools.
+     * URL: https://www.w3schools.com/java/java_files_create.asp
+     * Description: This code was using the FileWriter class together with its write() method to write some text to a file 
+     * Changes Made:
+     *  - Adapted the method to write an array of activities in the same folder as the input file.
+     */
     public void saveActivities(ActivitySelection activities) {
         try {
             try (FileWriter myWriter = new FileWriter(this.path + this.fileName.split("\\.")[0] + "_21011213.out")) {
