@@ -1,5 +1,6 @@
 package com.algorithms;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -15,8 +16,8 @@ public class InputOutput {
     private final String path;
     private int chunkSize;
     private int fileSize;
-    private float percentage = 0.1f;
     private int startPoint;
+    private String filePath;
 
     public InputOutput(String input, int bytesNumber) throws InputPathException{
         if(input.contains("/")){
@@ -29,7 +30,7 @@ public class InputOutput {
         }else {
             throw new InputPathException("Invalid path");
         }
-        int size =  (int) Math.pow(2, 20);
+        int size =  (int) Math.pow(2, 16);
         this.chunkSize = size - size % bytesNumber;
         this.startPoint = 0;
         System.out.println("Path: " + this.path + "\nFile name: " + this.fileName);
@@ -46,34 +47,38 @@ public class InputOutput {
         }else {
             throw new InputPathException("Invalid path");
         }
-        this.chunkSize =  (int) Math.pow(2, 20);
+        this.chunkSize =  (int) Math.pow(2, 16);
         this.startPoint = 0;
         System.out.println("Path: " + this.path + "\nFile name: " + this.fileName);
+        String[] split = this.fileName.split("\\.");
+        this.filePath = this.path +"extracted."+ split[2] +"."+ split[3];
     }
     
     public byte[] readFile(int chunkNumber) throws IOException{
         FileInputStream fileInputStream = new FileInputStream(this.path + this.fileName);
+        int size = 0;
+        long skip = 0;
         if (chunkNumber == 0){
             this.fileSize = fileInputStream.available();
-            this.chunkSize = Math.min(this.fileSize-this.startPoint, this.chunkSize);
-        } else
-            this.chunkSize = Math.min(fileInputStream.available(), this.chunkSize);
-            
-        byte[] chunk= new byte[this.chunkSize];
-        long skip = fileInputStream.skip( (long) chunkNumber * this.chunkSize + this.startPoint);
-
+            size = Math.min(this.fileSize-this.startPoint, this.chunkSize);
+            skip = fileInputStream.skip( (long) chunkNumber * this.chunkSize + this.startPoint);
+            System.out.println("chunk number: " + chunkNumber);
+            System.out.println("chunk size: " + size);
+        } else{
+            skip = fileInputStream.skip( (long) chunkNumber * this.chunkSize + this.startPoint);
+            size = Math.min(fileInputStream.available(), this.chunkSize);
+            System.out.println("chunk number: " + chunkNumber);
+            System.out.println("chunk size: " + size);
+        }
         if (skip == -1) {
+            System.out.println("End of file");
             throw new IOException("End of file");
         }
+        byte[] chunk= new byte[size];
         if (fileInputStream.read(chunk) == -1) {
             throw new IOException("End of file");
         }
-        if ((((chunkNumber + 1) * this.chunkSize ) / this.fileSize) > this.percentage) {
-            System.out.print("||");
-            this.percentage += 0.1f;
-        }
-        if (this.percentage == 1)
-            System.out.print(" ]");
+        
 
         return chunk;
     }
@@ -82,10 +87,11 @@ public class InputOutput {
         return chunkSize;
     }
 
-    public void appendToFile(byte byteCode, int n) {
+    public void appendToFile(byte[] byteCode, int len,int n) {
         String filePath = this.path + "21011213." + n + "." + this.fileName + ".hc";
         try (FileOutputStream fos = new FileOutputStream(filePath, true)) {
-            fos.write(byteCode);
+            for(int i = 0; i < len ; i++)
+                fos.write(byteCode[i]);
         } catch (IOException e) {
             System.out.println(e.getMessage());
         }
@@ -106,11 +112,6 @@ public class InputOutput {
         String filePath = this.path + "21011213." + n + "." + this.fileName + ".hc";
         FileOutputStream fos = new FileOutputStream(filePath);
         ObjectOutputStream s = new ObjectOutputStream(fos);
-        // s.writeObject(header.length);
-        // for(String[] head: header){
-        //     s.writeObject(head[0]);
-        //     s.writeObject(head[1]);
-        // }
         s.writeObject(header);
         s.close();
         fos.close();
@@ -124,12 +125,13 @@ public class InputOutput {
         this.startPoint -= fileInputStream.available();
         map.close();
         fileInputStream.close();
+        File file = new File(this.filePath);
+        if(file.exists())
+            file.delete();
         return headHashMap;
     }
 
     void writeToFile(List<Byte> bytes) {
-        String[] split = this.fileName.split("\\.");
-        String filePath = this.path +"extracted."+ split[2] +"."+ split[3];
         try (FileOutputStream fos = new FileOutputStream(filePath, true)) {
             for(byte b: bytes)
                 fos.write(b);
