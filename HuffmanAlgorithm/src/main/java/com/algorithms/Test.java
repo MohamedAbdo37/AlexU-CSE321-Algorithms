@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 
 public class Test {
     public static void main(String[] args) throws IOException {
@@ -83,18 +84,27 @@ public class Test {
             e.printStackTrace();
         }
 
-        if(hash1.length == hash2.length)
-            System.out.println("test 3 pass");
-        else
-            System.out.println("test 3 faild");
+        System.out.println("Hash1: " + Arrays.toString(hash1));
+        System.out.println("Hash2: " + Arrays.toString(hash2));
 
-        for(int i = 0; i < hash1.length;i++){
-            if(hash1[i] != hash2[i]){
-                System.out.println("test 4 faild");
+        // System.out.println("File sizes match. Proceeding to inspect content...");
+        // System.out.println("chunk1[0] = " + chunk1[0] + ", chunk2[0] = " + chunk2[0]);
+
+        // // Print first few bytes for comparison
+        // for (int i = 711050; i < 711060; i++) {
+        //     System.out.println("Byte " + i + ": chunk1 = " + chunk1[i] + ", chunk2 = " + chunk2[i]);
+        // }
+
+        for (int i = 0; i < hash1.length; i++) {
+            if (hash1[i] != hash2[i]) {
+                System.out.println("Hash mismatch at index " + i + ": hash1 = " + hash1[i] + ", hash2 = " + hash2[i]);
+                System.out.println("test 3 failed");
                 return;
             }
         }
-        System.out.println("test 4 pass");
+        System.out.println("test 3 pass");
+
+        
 
         // HashMap<String, String> map = new HashMap<String, String>(); 
 

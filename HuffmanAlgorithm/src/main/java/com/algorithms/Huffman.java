@@ -67,7 +67,7 @@ public class Huffman {
 
             // compress the chunk
             for (int i = 0; i < chunk.length;) {
-                if(b >= (89464 -1774))
+                if(b >= 291)
                     b = b;
                 String word = "";
                 for (int j = 0; j < this.bytesNumber && i < chunk.length; j++) {
@@ -86,7 +86,7 @@ public class Huffman {
                 buffer = buffer.concat(code);
 
                 while (buffer.length() >= 8) { 
-                    if(b >= (89464 -1774))
+                    if(b >= 291)
                         b = b;
                     byteCode = byteCode.concat(buffer.substring(0, 8));
                     buffer = buffer.substring(8);
@@ -103,7 +103,7 @@ public class Huffman {
 
             // discharging the buffer
             while (buffer.length() >= 8) { 
-                if(b >= (89464 -1774))
+                if(b >= 291)
                     b = b;
                 byteCode = byteCode.concat(buffer.substring(0, 8));
                 buffer = buffer.substring(8);
@@ -118,7 +118,7 @@ public class Huffman {
 
         }while(chunk.length == this.inputOutput.getChunkSize());
 
-        if(b >= (89464 -1774))
+        if(b >= 291)
             b = b;
 
         // complete last compressed byte with non-key values
@@ -128,7 +128,7 @@ public class Huffman {
             while(add.length() < n){
                 if(!this.keyHashMap.containsKey(add + "0"))
                     add = add + "0";
-                if(!this.keyHashMap.containsKey(add + "1"))
+                else if(!this.keyHashMap.containsKey(add + "1"))
                     add = add + "1";
             }
             buffer = buffer + add;
@@ -198,7 +198,7 @@ public class Huffman {
         System.gc();
         long start;
         long end;
-        int bytesNumber = 1;
+        int bytesNumber = 3;
         String file = "Algorithms - Lectures 7 and 8 (Greedy algorithms).pdf";
         String filePath = "C:\\Users\\Mohamed Abdel-Moneim\\Desktop\\" + file;
         InputOutput inputOutput;
@@ -233,7 +233,7 @@ public class Huffman {
         System.out.println("Program starts to decompress the file");
         System.out.println("Timer starts");
         start = System.currentTimeMillis();
-        huffman = new Huffman(inputOutput, bytesNumber);
+        huffman = new Huffman(inputOutput, 0);
         try {
             huffman.decompress();
         } catch (Exception e) {
@@ -246,9 +246,9 @@ public class Huffman {
 
     }
 
-    private void decompress() throws FileNotFoundException, ClassNotFoundException, IOException {
+    public void decompress() throws FileNotFoundException, ClassNotFoundException, IOException {
         // read file header
-        this.keyHashMap = this.inputOutput.readHeader();
+        this.keyHashMap = (HashMap<String, String>)this.inputOutput.readHeader();
         this.chunkNumber = 0;
         byte[] chunk;
         List<Byte> bytes;
@@ -280,9 +280,6 @@ public class Huffman {
 
                 if(kb.size() > 1023){
                     bytes = this.toByteArray(kb);
-                    if(kb.size() < bytes.size())
-                        System.out.println("Compressed: "+kb.size() + " Decompressed: "+bytes.size());
-
                     b += bytes.size();
                     this.inputOutput.writeToFile(bytes);
                     kb.clear();
@@ -293,8 +290,6 @@ public class Huffman {
         }while(chunk.length == this.inputOutput.getChunkSize());
 
         bytes = this.toByteArray(kb);
-        if(kb.size() < bytes.size())
-            System.out.println("Compressed: "+kb.size() + " Decompressed: "+bytes.size());
         b += bytes.size();
         System.out.println(" Decompressed: "+bytes.size());
         System.out.println("Decompressed: " + b + " bytes");

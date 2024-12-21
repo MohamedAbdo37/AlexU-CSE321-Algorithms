@@ -7,8 +7,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class InputOutput {
 
@@ -47,7 +47,7 @@ public class InputOutput {
         }else {
             throw new InputPathException("Invalid path");
         }
-        this.chunkSize =  (int) Math.pow(2, 16);
+        this.chunkSize =  (int) Math.pow(2, 20);
         this.startPoint = 0;
         System.out.println("Path: " + this.path + "\nFile name: " + this.fileName);
         String[] split = this.fileName.split("\\.");
@@ -62,13 +62,10 @@ public class InputOutput {
             this.fileSize = fileInputStream.available();
             size = Math.min(this.fileSize-this.startPoint, this.chunkSize);
             skip = fileInputStream.skip( (long) chunkNumber * this.chunkSize + this.startPoint);
-            System.out.println("chunk number: " + chunkNumber);
-            System.out.println("chunk size: " + size);
+            
         } else{
             skip = fileInputStream.skip( (long) chunkNumber * this.chunkSize + this.startPoint);
             size = Math.min(fileInputStream.available(), this.chunkSize);
-            System.out.println("chunk number: " + chunkNumber);
-            System.out.println("chunk size: " + size);
         }
         if (skip == -1) {
             System.out.println("End of file");
@@ -108,7 +105,7 @@ public class InputOutput {
         }
     }
 
-    public void writeHeader(HashMap<String,String> header, int n) throws IOException{
+    public void writeHeader(Map<String,String> header, int n) throws IOException{
         String filePath = this.path + "21011213." + n + "." + this.fileName + ".hc";
         FileOutputStream fos = new FileOutputStream(filePath);
         ObjectOutputStream s = new ObjectOutputStream(fos);
@@ -117,11 +114,11 @@ public class InputOutput {
         fos.close();
     }
 
-    public HashMap<String,String> readHeader() throws FileNotFoundException, IOException, ClassNotFoundException{
+    public Map<String,String> readHeader() throws FileNotFoundException, IOException, ClassNotFoundException{
         FileInputStream fileInputStream = new FileInputStream(this.path + this.fileName);
         this.startPoint = fileInputStream.available();
         ObjectInputStream map = new ObjectInputStream(fileInputStream);
-        HashMap<String,String> headHashMap = (HashMap<String,String>) map.readObject();
+        Map<String,String> headHashMap = (Map<String,String>) map.readObject();
         this.startPoint -= fileInputStream.available();
         map.close();
         fileInputStream.close();

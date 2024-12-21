@@ -1,0 +1,9 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="WeightedActivitySelection:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/WeightedActivitySelection_jar</output-path>
+    <root id="archive" name="WeightedActivitySelection.jar">
+      <element id="module-output" name="WeightedActivitySelection" />
+      <element id="module-source" name="WeightedActivitySelection" />
+    </root>
+  </artifact>
+</component>
