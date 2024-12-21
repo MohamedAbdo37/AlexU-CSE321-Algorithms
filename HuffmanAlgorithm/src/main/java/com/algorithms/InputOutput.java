@@ -1,10 +1,13 @@
 package com.algorithms;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.Map;
+import java.util.HashMap;
+import java.util.List;
 
 public class InputOutput {
 
@@ -13,6 +16,7 @@ public class InputOutput {
     private int chunkSize;
     private int fileSize;
     private float percentage = 0.1f;
+    private int startPoint;
 
     public InputOutput(String input, int bytesNumber) throws InputPathException{
         if(input.contains("/")){
@@ -27,6 +31,7 @@ public class InputOutput {
         }
         int size =  (int) Math.pow(2, 20);
         this.chunkSize = size - size % bytesNumber;
+        this.startPoint = 0;
         System.out.println("Path: " + this.path + "\nFile name: " + this.fileName);
     }
 
@@ -41,6 +46,8 @@ public class InputOutput {
         }else {
             throw new InputPathException("Invalid path");
         }
+        this.chunkSize =  (int) Math.pow(2, 20);
+        this.startPoint = 0;
         System.out.println("Path: " + this.path + "\nFile name: " + this.fileName);
     }
     
@@ -48,12 +55,12 @@ public class InputOutput {
         FileInputStream fileInputStream = new FileInputStream(this.path + this.fileName);
         if (chunkNumber == 0){
             this.fileSize = fileInputStream.available();
-            this.chunkSize = Math.min(this.fileSize, this.chunkSize);
+            this.chunkSize = Math.min(this.fileSize-this.startPoint, this.chunkSize);
         } else
             this.chunkSize = Math.min(fileInputStream.available(), this.chunkSize);
             
         byte[] chunk= new byte[this.chunkSize];
-        long skip = fileInputStream.skip( (long) chunkNumber * this.chunkSize);
+        long skip = fileInputStream.skip( (long) chunkNumber * this.chunkSize + this.startPoint);
 
         if (skip == -1) {
             throw new IOException("End of file");
@@ -95,14 +102,43 @@ public class InputOutput {
         }
     }
 
-    public void writeHeader(Map<String,String> header, int n) throws IOException{
+    public void writeHeader(HashMap<String,String> header, int n) throws IOException{
         String filePath = this.path + "21011213." + n + "." + this.fileName + ".hc";
-        try(FileOutputStream fos = new FileOutputStream(filePath);){
-            ObjectOutputStream s = new ObjectOutputStream(fos);
-            s.writeObject(header);
-            s.close();
-        } 
+        FileOutputStream fos = new FileOutputStream(filePath);
+        ObjectOutputStream s = new ObjectOutputStream(fos);
+        // s.writeObject(header.length);
+        // for(String[] head: header){
+        //     s.writeObject(head[0]);
+        //     s.writeObject(head[1]);
+        // }
+        s.writeObject(header);
+        s.close();
+        fos.close();
     }
+
+    public HashMap<String,String> readHeader() throws FileNotFoundException, IOException, ClassNotFoundException{
+        FileInputStream fileInputStream = new FileInputStream(this.path + this.fileName);
+        this.startPoint = fileInputStream.available();
+        ObjectInputStream map = new ObjectInputStream(fileInputStream);
+        HashMap<String,String> headHashMap = (HashMap<String,String>) map.readObject();
+        this.startPoint -= fileInputStream.available();
+        map.close();
+        fileInputStream.close();
+        return headHashMap;
+    }
+
+    void writeToFile(List<Byte> bytes) {
+        String[] split = this.fileName.split("\\.");
+        String filePath = this.path +"extracted."+ split[2] +"."+ split[3];
+        try (FileOutputStream fos = new FileOutputStream(filePath, true)) {
+            for(byte b: bytes)
+                fos.write(b);
+            
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
     
 }
 

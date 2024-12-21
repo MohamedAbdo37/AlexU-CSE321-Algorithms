@@ -1,5 +1,6 @@
 package com.algorithms;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -10,6 +11,7 @@ public class Huffman {
     private int bytesNumber;
     private int chunkNumber;
     private HashMap<String, Node> wordsHashMap = new HashMap<String, Node>();
+    private HashMap<String, String> keyHashMap = new HashMap<String, String>();
     private Node root;
 
     public Huffman(InputOutput inputOutput, int bytesNumber) {
@@ -45,7 +47,7 @@ public class Huffman {
 
         this.root = this.buildTree(wordsList);
         System.gc();
-        
+
         String byteCode = "";
         String buffer = "";
         String code;
@@ -75,19 +77,45 @@ public class Huffman {
                     kb[b%1024] = this.binaryStringToByte(byteCode);
                     byteCode = "";
                     b++;
+
+                    if(b % 1024 == 0){
+                        this.inputOutput.appendToFile(kb, this.bytesNumber);
+                    }
                 }
+
+            }
+
+            while (buffer.length() >= 8) { 
+                byteCode = byteCode.concat(buffer.substring(0, 8));
+                buffer = buffer.substring(8);
+                kb[b%1024] = this.binaryStringToByte(byteCode);
+                byteCode = "";
+                b++;
 
                 if(b % 1024 == 0){
                     this.inputOutput.appendToFile(kb, this.bytesNumber);
                 }
-
-            }
-
-            for(int i = 0; i< b%1024;i++){
-                this.inputOutput.appendToFile(kb[i], this.bytesNumber);
             }
 
         }while(chunk.length == this.inputOutput.getChunkSize());
+        if(!buffer.isEmpty()){
+            int n = 8 - buffer.length();
+            String add = "";
+            while(add.length() < n){
+                if(!this.keyHashMap.containsKey(add + "0"))
+                    add = add + "0";
+                if(!this.keyHashMap.containsKey(add + "1"))
+                    add = add + "1";
+            }
+            buffer = buffer + add;
+            kb[b%1024] = this.binaryStringToByte(buffer);
+            buffer = buffer.substring(8);
+            b++;
+        }
+        for(int i = 0; i< b%1024;i++){
+            this.inputOutput.appendToFile(kb[i], this.bytesNumber);
+        }
+        
         System.out.println("Compressed to " + b + " bytes");
         System.out.println("Compression ends");
     }
@@ -109,15 +137,17 @@ public class Huffman {
             heap.insert(node);
         }
 
-        HashMap<String, String> headerHashMap = new HashMap<String, String>();
+        // String[][] header = new String[wordsList.size()][2];
 
-        for(String word : wordsList) {
-            node = this.wordsHashMap.get(word);
+        for(int i = 0; i < wordsList.size(); i++){
+            node = this.wordsHashMap.get(wordsList.get(i));
             node.setValue(findCode(node));
-            headerHashMap.put(node.getValue(), word);
+            // header[i][0] = node.getValue();
+            // header[i][1] = wordsList.get(i);
+            this.keyHashMap.put(node.getValue(), wordsList.get(i));
         }
 
-        this.inputOutput.writeHeader(headerHashMap, this.bytesNumber);
+        this.inputOutput.writeHeader(this.keyHashMap, this.bytesNumber);
 
         return heap.remove();
     }
@@ -146,7 +176,7 @@ public class Huffman {
     public static void main(String[] args) {
         long start;
         long end;
-        int bytesNumber = 2;
+        int bytesNumber = 1;
         String filePath = "C:\\Users\\Mohamed Abdel-Moneim\\Desktop\\Alice in Wonderland.txt" ;
         InputOutput inputOutput;
         try {
@@ -169,35 +199,80 @@ public class Huffman {
         System.out.println("Timer ends");
         System.out.println("Time: " + (end - start) + " ms");
 
-        // System.out.println("Program starts to decompress the file");
-        // System.out.println("Timer starts");
-        // start = System.currentTimeMillis();
-        // try {
-        //     huffman.decompress();
-        // } catch (Exception e) {
-        //     System.out.println(e.getMessage());
-        // }
-        // end = System.currentTimeMillis();
-        // System.out.println("Timer ends");
-        // System.out.println("Time: " + (end - start) + " ms");
+        filePath = "C:\\Users\\Mohamed Abdel-Moneim\\Desktop\\21011213.1.Alice in Wonderland.txt.hc" ;
+        try {
+            inputOutput = new InputOutput(filePath);
+        } catch (InputPathException e) {
+            System.out.println(e.getMessage());
+            return;
+        }
+
+        System.out.println("Program starts to decompress the file");
+        System.out.println("Timer starts");
+        start = System.currentTimeMillis();
+        huffman = new Huffman(inputOutput, bytesNumber);
+        try {
+            huffman.decompress();
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+
+        end = System.currentTimeMillis();
+        System.out.println("Timer ends");
+        System.out.println("Time: " + (end - start) + " ms");
 
     }
 
-    private void decompress() {
-        throw new UnsupportedOperationException("Not supported yet.");
+    private void decompress() throws FileNotFoundException, ClassNotFoundException, IOException {
+        this.keyHashMap = this.inputOutput.readHeader();
+        this.chunkNumber = 0;
+        byte[] chunk;
+        List<Byte> bytes;
+        do {
+            try{
+                chunk = this.inputOutput.readFile(this.chunkNumber++);
+            } catch (IOException e) {
+                System.out.println("End of file");
+                break;
+            }
+
+            String word = "";
+            int b = 0;
+            List<String> kb = new ArrayList<String>();
+            String buffer = "";
+            for (int i = 0; i < chunk.length;) {
+                String byteCode = String.format("%8s", Integer.toBinaryString(chunk[i++] & 0xFF)).replace(' ', '0');
+                buffer =  buffer.concat(byteCode);
+                for(int j = 1; j < buffer.length()+1; j++){
+                    word = word.concat(buffer.substring(j-1, j));
+                    if(this.keyHashMap.containsKey(word)){
+                        kb.add(this.keyHashMap.get(word));
+                        word = "";
+                        buffer = buffer.substring(j);
+                        j=0;
+                    }
+                }
+
+                if(kb.size() > 1023){
+                    bytes = this.toByteArray(kb);
+                    this.inputOutput.writeToFile(bytes);
+                    kb.clear();
+                }
+                word = "";
+            }
+            bytes = this.toByteArray(kb);
+            this.inputOutput.writeToFile(bytes);
+        }while(chunk.length == this.inputOutput.getChunkSize());
     }
 
-    // private void buildHeader() {
-    //     int tagByte;
-    //     String tag ;
-    //     while (true) { 
-    //         tagByte = (byte) 0;
-    //         tag = String.format("%8s", Integer.toBinaryString( (byte) tagByte & 0xFF)).replace(' ', '0');
-    //         if(!(this.headerHashMap.containsKey(tag) || this.headerHashMap.containsValue(tag)))
-    //             break;
-    //     }
-    //     this.inputOutput.appendToFile((byte) tagByte, this.bytesNumber);
-
-    // }
+    private List<Byte> toByteArray(List<String> kb) {
+        int n = kb.get(0).length()/8;
+        List<Byte> bytes = new ArrayList<>();
+        for(String b: kb){
+            for(int k = 0; k < b.length()/8; k++)
+                bytes.add(this.binaryStringToByte(b.substring(k*8, (k+1)*8)));
+        }
+        return bytes;
+    }
     
 }
